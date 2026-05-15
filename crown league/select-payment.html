@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - اختر طريقة الدفع</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            margin-bottom: 40px;
+            color: #CCCCCC;
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .payment-card {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .payment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .payment-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .payment-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .payment-currency {
+            font-size: 0.9rem;
+            color: #CCCCCC;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="dashboard.html">← العودة إلى لوحة التحكم</a>
+        </div>
+
+        <h1>اختر طريقة الدفع</h1>
+        <div class="subtitle">اختر محفظة الدفع التي تريد الشحن من خلالها</div>
+
+        <div class="payment-options">
+            <a href="syriatel.html" class="payment-card">
+                <div class="payment-icon">📱</div>
+                <div class="payment-name">سيريتل كاش</div>
+                <div class="payment-currency">العملة: ل.س (ليرة سورية)</div>
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

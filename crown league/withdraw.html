@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - سحب الرصيد</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            margin-bottom: 30px;
+            color: #CCCCCC;
+        }
+
+        .current-balance {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .balance-text {
+            font-size: 1.2rem;
+        }
+
+        .balance-text span {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .currency-buttons {
+            display: flex;
+            gap: 10px;
+            position: relative;
+        }
+
+        .currency-icon {
+            font-size: 1.8rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            filter: drop-shadow(0 0 5px #FFD700);
+            transition: transform 0.2s;
+            padding: 5px;
+            font-family: Arial, sans-serif;
+            font-weight: bold;
+            color: #FFFFFF;
+        }
+
+        .currency-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .currency-menu {
+            position: absolute;
+            top: 50px;
+            right: 0;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+        }
+
+        .currency-menu button {
+            background: none;
+            border: none;
+            padding: 10px 25px;
+            color: #FFD700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: 0.2s;
+            border-radius: 8px;
+        }
+
+        .currency-menu button:hover {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .withdraw-form {
+            background-color: #0a0a0a;
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid #FFD700;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: right;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group select option {
+            background-color: #1a1a1a;
+            color: #FFD700;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #AA0000;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: scale(1.02);
+            background-color: #cc0000;
+        }
+
+        .success-msg {
+            color: #00AA00;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .error-msg {
+            color: #AA0000;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .info-note {
+            font-size: 0.8rem;
+            color: #CCCCCC;
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="dashboard.html">← العودة إلى لوحة التحكم</a>
+        </div>
+
+        <h1>سحب الرصيد</h1>
+        <div class="subtitle">اختر نوع السحب وأدخل بياناتك</div>
+
+        <div class="current-balance">
+            <div class="balance-text">💰 رصيدك الحالي: <span id="currentBalance">0</span> <span
+                    id="currentCurrencyLabel">USD</span></div>
+            <div class="currency-buttons">
+                <button class="currency-icon" id="currencyIconBtn">💱</button>
+                <div class="currency-menu" id="currencyMenu">
+                    <button id="usdBtnMenu">USD</button>
+                    <button id="sypBtnMenu">SYP</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="withdraw-form">
+            <form id="withdrawForm">
+                <div class="input-group">
+                    <label>نوع السحب</label>
+                    <select id="withdrawType" required>
+                        <option value="">-- اختر نوع السحب --</option>
+                        <option value="crypto">💰 عملات رقمية (USDT)</option>
+                        <option value="sham_syp">🏦 شام كاش - ل.س (ليرة سورية)</option>
+                        <option value="sham_usd">💵 شام كاش - دولار (USD)</option>
+                        <option value="syriatel">📱 سيريتل كاش (ليرة سورية)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>رقم المحفظة أو العنوان</label>
+                    <input type="text" id="walletAddress" placeholder="أدخل رقم المحفظة أو العنوان" required>
+                </div>
+                <div class="input-group">
+                    <label>الاسم كاملاً (للتأكيد)</label>
+                    <input type="text" id="fullName" placeholder="أدخل اسمك الكامل" required>
+                </div>
+                <div class="input-group">
+                    <label>كمية المال المطلوب سحبها</label>
+                    <input type="number" id="amount" placeholder="أدخل المبلغ" required>
+                </div>
+                <button type="submit" class="btn-submit">إرسال طلب السحب</button>
+            </form>
+            <div class="success-msg" id="successMsg">✅ تم إرسال طلب السحب بنجاح، سيتم مراجعته قريباً</div>
+            <div class="error-msg" id="errorMsg">❌ الرصيد غير كافي أو المبلغ غير صحيح</div>
+            <div class="info-note">📌 ملاحظة: سيتم تحويل المبلغ تلقائياً حسب العملة المختارة لعرض السحب</div>
+        </div>
+    </div>
+
+    <script>
+        const withdrawForm = document.getElementById('withdrawForm');
+        const successMsg = document.getElementById('successMsg');
+        const errorMsg = document.getElementById('errorMsg');
+        const currentBalanceSpan = document.getElementById('currentBalance');
+        const currentCurrencyLabel = document.getElementById('currentCurrencyLabel');
+        const currencyIconBtn = document.getElementById('currencyIconBtn');
+        const currencyMenu = document.getElementById('currencyMenu');
+        const usdBtnMenu = document.getElementById('usdBtnMenu');
+        const sypBtnMenu = document.getElementById('sypBtnMenu');
+
+        let displayCurrency = 'USD';
+        const conversionRate = 110;
+
+        function getCurrentUser() {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                return JSON.parse(savedUser);
+            }
+            return { username: 'زائر', email: '' };
+        }
+
+        function getUserBalanceUSD() {
+            const user = getCurrentUser();
+            const balance = localStorage.getItem(`balance_${user.username}`);
+            if (balance !== null && balance !== undefined && balance !== '') {
+                return parseFloat(balance);
+            }
+            return 0;
+        }
+
+        function updateBalanceDisplay() {
+            const balanceUSD = getUserBalanceUSD();
+            if (displayCurrency === 'USD') {
+                currentBalanceSpan.innerText = balanceUSD;
+                currentCurrencyLabel.innerText = 'USD';
+            } else {
+                const balanceSYP = balanceUSD * conversionRate;
+                currentBalanceSpan.innerText = balanceSYP;
+                currentCurrencyLabel.innerText = 'SYP';
+            }
+        }
+
+        function setDisplayCurrency(currency) {
+            displayCurrency = currency;
+            updateBalanceDisplay();
+            currencyMenu.style.display = 'none';
+        }
+
+        currencyIconBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            if (currencyMenu.style.display === 'flex') {
+                currencyMenu.style.display = 'none';
+            } else {
+                currencyMenu.style.display = 'flex';
+            }
+        });
+
+        document.addEventListener('click', function () {
+            currencyMenu.style.display = 'none';
+        });
+
+        currencyMenu.addEventListener('click', function (e) {
+            e.stopPropagation();
+        });
+
+        usdBtnMenu.addEventListener('click', function () {
+            setDisplayCurrency('USD');
+        });
+
+        sypBtnMenu.addEventListener('click', function () {
+            setDisplayCurrency('SYP');
+        });
+
+        function saveWithdrawRequest(request) {
+            let requests = localStorage.getItem('withdrawRequests');
+            if (requests) {
+                requests = JSON.parse(requests);
+            } else {
+                requests = [];
+            }
+            requests.push(request);
+            localStorage.setItem('withdrawRequests', JSON.stringify(requests));
+            console.log('تم حفظ طلب السحب:', request);
+        }
+
+        withdrawForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const withdrawType = document.getElementById('withdrawType').value;
+            const walletAddress = document.getElementById('walletAddress').value.trim();
+            const fullName = document.getElementById('fullName').value.trim();
+            const amountInput = document.getElementById('amount').value.trim();
+
+            if (!withdrawType || !walletAddress || !fullName || !amountInput) {
+                alert('الرجاء ملء جميع الحقول');
+                return;
+            }
+
+            if (isNaN(amountInput) || amountInput <= 0) {
+                alert('الرجاء إدخال مبلغ صحيح');
+                return;
+            }
+
+            const currentBalanceUSD = getUserBalanceUSD();
+            let withdrawAmountUSD = parseFloat(amountInput);
+
+            if (displayCurrency === 'SYP') {
+                withdrawAmountUSD = withdrawAmountUSD / conversionRate;
+            }
+
+            if (withdrawAmountUSD > currentBalanceUSD) {
+                errorMsg.style.display = 'block';
+                successMsg.style.display = 'none';
+                setTimeout(() => errorMsg.style.display = 'none', 3000);
+                return;
+            }
+
+            errorMsg.style.display = 'none';
+
+            const currentUser = getCurrentUser();
+
+            const withdrawTypeMap = {
+                'crypto': 'عملات رقمية (USDT)',
+                'sham_syp': 'شام كاش - ل.س',
+                'sham_usd': 'شام كاش - دولار',
+                'syriatel': 'سيريتل كاش'
+            };
+
+            const withdrawRequest = {
+                id: Date.now(),
+                username: currentUser.username,
+                email: currentUser.email,
+                fullName: fullName,
+                withdrawType: withdrawType,
+                withdrawTypeName: withdrawTypeMap[withdrawType],
+                walletAddress: walletAddress,
+                amountUSD: withdrawAmountUSD,
+                amountOriginal: parseFloat(amountInput),
+                originalCurrency: displayCurrency,
+                status: 'pending',
+                date: new Date().toLocaleString('ar-EG')
+            };
+
+            const newBalance = currentBalanceUSD - withdrawAmountUSD;
+            localStorage.setItem(`balance_${currentUser.username}`, JSON.stringify(newBalance));
+
+            saveWithdrawRequest(withdrawRequest);
+
+            document.getElementById('withdrawType').value = '';
+            document.getElementById('walletAddress').value = '';
+            document.getElementById('fullName').value = '';
+            document.getElementById('amount').value = '';
+
+            updateBalanceDisplay();
+
+            successMsg.style.display = 'block';
+            setTimeout(() => successMsg.style.display = 'none', 5000);
+        });
+
+        updateBalanceDisplay();
+    </script>
+</body>
+
+</html>

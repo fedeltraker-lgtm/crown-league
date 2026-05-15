@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - الدردشة العامة</title>
+<link rel="icon" type="image/png" href="logo.png">
+   
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .chat-container {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            background-color: #1a1a1a;
+            color: #FFD700;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .message-info {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+
+        .readonly-notice {
+            text-align: center;
+            padding: 12px;
+            background-color: #1a1a1a;
+            border-top: 1px solid #FFD700;
+            color: #FFA500;
+            font-size: 0.8rem;
+        }
+
+        .empty-chat {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .back-link a {
+            color: #000000;
+        }
+
+        body.light-mode .chat-container {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .message-bubble {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        body.light-mode .readonly-notice {
+            background-color: #e0e0e0;
+            border-top-color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="message.html">← العودة إلى الرسائل</a>
+        </div>
+
+        <h1>💬 الدردشة العامة</h1>
+        <div class="subtitle">رسائل من الإدمن - للقراءة فقط</div>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <div class="empty-chat">💬 لا توجد رسائل بعد</div>
+            </div>
+            <div class="readonly-notice">
+                🔒 وضع القراءة فقط - يمكنك مشاهدة رسائل الإدمن فقط
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatInterval = null;
+        let currentUser = null;
+
+        function getCurrentUser() {
+            const saved = localStorage.getItem('currentUser');
+            return saved ? JSON.parse(saved) : { username: 'زائر' };
+        }
+
+        function loadMessages() {
+            const messages = localStorage.getItem('publicChat');
+            const chatDiv = document.getElementById('chatMessages');
+
+            if (!messages || JSON.parse(messages).length === 0) {
+                chatDiv.innerHTML = '<div class="empty-chat">💬 لا توجد رسائل بعد</div>';
+                return;
+            }
+
+            const allMessages = JSON.parse(messages);
+            chatDiv.innerHTML = '';
+
+            allMessages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">${msg.text}</div>
+                    <div class="message-info">👑 الإدمن • ${msg.time}</div>
+                `;
+                chatDiv.appendChild(messageDiv);
+            });
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        function markAsRead() {
+            currentUser = getCurrentUser();
+            localStorage.setItem(`publicChat_read_${currentUser.username}`, Date.now().toString());
+        }
+
+        function startChatListener() {
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(() => {
+                loadMessages();
+            }, 3000);
+        }
+
+        markAsRead();
+        startChatListener();
+        loadMessages();
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') {
+                    document.body.classList.add('light-mode');
+                } else {
+                    document.body.classList.remove('light-mode');
+                }
+            }
+            if (e.key === 'publicChat') {
+                loadMessages();
+                markAsRead();
+            }
+        });
+
+        loadTheme();
+    </script>
+</body>
+
+</html>

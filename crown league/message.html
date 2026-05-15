@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - الرسائل</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="check-auth.js">
+        function getCurrentUser() {
+                const saved = localStorage.getItem('currentUser');
+                return saved ? JSON.parse(saved) : { username: 'زائر' };
+            }
+
+            function getUnreadPublicMessages() {
+                const messages = localStorage.getItem('publicChat');
+                if (!messages) return 0;
+                const lastReadKey = `publicChat_read_${getCurrentUser().username}`;
+                const lastRead = localStorage.getItem(lastReadKey);
+                const allMessages = JSON.parse(messages);
+                if (!lastRead) return allMessages.length;
+                const lastReadTime = parseInt(lastRead);
+                return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime).length;
+            }
+
+            function getUnreadSupportMessages() {
+                const messages = localStorage.getItem('supportChat');
+                if (!messages) return 0;
+                const lastReadKey = `supportChat_read_${getCurrentUser().username}`;
+                const lastRead = localStorage.getItem(lastReadKey);
+                const allMessages = JSON.parse(messages);
+                const currentUser = getCurrentUser().username;
+                if (!lastRead) return allMessages.filter(msg => msg.username !== currentUser).length;
+                const lastReadTime = parseInt(lastRead);
+                return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime && msg.username !== currentUser).length;
+            }
+
+            function updateBadges() {
+                const generalUnread = getUnreadPublicMessages();
+                const supportUnread = getUnreadSupportMessages();
+
+                const generalBadge = document.getElementById('generalBadge');
+                const supportBadge = document.getElementById('supportBadge');
+
+                if (generalUnread > 0) {
+                    generalBadge.style.display = 'flex';
+                    generalBadge.innerText = generalUnread > 99 ? '99+' : generalUnread;
+                    generalBadge.title = `${generalUnread} رسالة جديدة في الدردشة العامة`;
+                } else {
+                    generalBadge.style.display = 'none';
+                }
+
+                if (supportUnread > 0) {
+                    supportBadge.style.display = 'flex';
+                    supportBadge.innerText = supportUnread > 99 ? '99+' : supportUnread;
+                    supportBadge.title = `${supportUnread} رسالة جديدة من الدعم`;
+                } else {
+                    supportBadge.style.display = 'none';
+                }
+            }
+
+            setInterval(updateBadges, 5000);
+            updateBadges();
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            color: #CCCCCC;
+        }
+
+        .options-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .option-card {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 40px 30px;
+            min-width: 250px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .option-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .option-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .option-desc {
+            color: #888;
+            font-size: 0.85rem;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 22px;
+            height: 22px;
+            background-color: #ff0000;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 6px;
+            z-index: 10;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .subtitle {
+            color: #555;
+        }
+
+        body.light-mode .back-link a {
+            color: #000000;
+        }
+
+        body.light-mode .option-card {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .option-title {
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="dashboard.html">← العودة إلى لوحة التحكم</a>
+        </div>
+
+        <h1>📨 الرسائل</h1>
+        <div class="subtitle">اختر نوع المحادثة التي تريدها</div>
+
+        <div class="options-container">
+            <div class="option-card" id="supportOption">
+                <div class="option-icon">👑</div>
+                <div class="option-title">التواصل مع الدعم</div>
+                <div class="option-desc">للتواصل مع فريق الدعم والمسؤولين</div>
+                <span id="supportBadge" class="notification-badge" style="display: none;"></span>
+            </div>
+
+            <div class="option-card" id="generalOption">
+                <div class="option-icon">💬</div>
+                <div class="option-title">الرسائل العامة</div>
+                <div class="option-desc">للمحادثة مع جميع اللاعبين (قراءة فقط)</div>
+                <span id="generalBadge" class="notification-badge" style="display: none;"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function getCurrentUser() {
+            const saved = localStorage.getItem('currentUser');
+            return saved ? JSON.parse(saved) : { username: 'زائر' };
+        }
+
+        function getUnreadPublicMessages() {
+            const messages = localStorage.getItem('publicChat');
+            if (!messages) return 0;
+
+            const lastReadKey = `publicChat_read_${getCurrentUser().username}`;
+            const lastRead = localStorage.getItem(lastReadKey);
+            const allMessages = JSON.parse(messages);
+
+            if (!lastRead) return allMessages.length;
+
+            const lastReadTime = parseInt(lastRead);
+            return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime).length;
+        }
+
+        function getUnreadSupportMessages() {
+            const messages = localStorage.getItem('supportChat');
+            if (!messages) return 0;
+
+            const lastReadKey = `supportChat_read_${getCurrentUser().username}`;
+            const lastRead = localStorage.getItem(lastReadKey);
+            const allMessages = JSON.parse(messages);
+            const currentUser = getCurrentUser().username;
+
+            if (!lastRead) {
+                return allMessages.filter(msg => msg.username !== currentUser).length;
+            }
+
+            const lastReadTime = parseInt(lastRead);
+            return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime && msg.username !== currentUser).length;
+        }
+
+        function updateBadges() {
+            const generalUnread = getUnreadPublicMessages();
+            const supportUnread = getUnreadSupportMessages();
+
+            const generalBadge = document.getElementById('generalBadge');
+            const supportBadge = document.getElementById('supportBadge');
+
+            if (generalUnread > 0) {
+                generalBadge.style.display = 'flex';
+                generalBadge.innerText = generalUnread > 99 ? '99+' : generalUnread;
+            } else {
+                generalBadge.style.display = 'none';
+            }
+
+            if (supportUnread > 0) {
+                supportBadge.style.display = 'flex';
+                supportBadge.innerText = supportUnread > 99 ? '99+' : supportUnread;
+            } else {
+                supportBadge.style.display = 'none';
+            }
+        }
+
+        setInterval(updateBadges, 5000);
+        updateBadges();
+
+        document.getElementById('supportOption').addEventListener('click', () => {
+            localStorage.setItem(`supportChat_read_${getCurrentUser().username}`, Date.now().toString());
+            window.location.href = 'chatoadmin.html';
+        });
+
+        document.getElementById('generalOption').addEventListener('click', () => {
+            localStorage.setItem(`publicChat_read_${getCurrentUser().username}`, Date.now().toString());
+            window.location.href = 'chat.html';
+        });
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') {
+                    document.body.classList.add('light-mode');
+                } else {
+                    document.body.classList.remove('light-mode');
+                }
+            }
+            if (e.key === 'publicChat' || e.key === 'supportChat') {
+                updateBadges();
+            }
+        });
+
+        loadTheme();
+    </script>
+</body>
+
+</html>

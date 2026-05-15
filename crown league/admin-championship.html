@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - إدارة البطولات</title>
+    <script src="check-auth.js"> 
+     // ========== تحسين الأداء مع الحفاظ على التوافق ==========
+
+    const API_URL = '/.netlify/functions/champ';
+
+  
+        // 1. تحسين القراءة - إضافة طبقة تخزين مؤقت فقط (لا نستبدل localStorage)
+        const readCache = new Map();
+        const CACHE_TTL = 500; // نصف ثانية
+
+        function fastRead(key) {
+            // محاولة القراءة من الكاش أولاً
+            if (readCache.has(key)) {
+                const { value, timestamp } = readCache.get(key);
+                if (Date.now() - timestamp < CACHE_TTL) {
+                    return value;
+                }
+            }
+
+            // إذا انتهت صلاحية الكاش، نقرأ من localStorage
+            const value = localStorage.getItem(key);
+            readCache.set(key, { value, timestamp: Date.now() });
+            return value;
+        }
+
+        // 2. تحسين الكتابة - الكتابة المباشرة مع تحديث الكاش
+        function fastWrite(key, value) {
+            // تحديث الكاش أولاً
+            readCache.set(key, { value, timestamp: Date.now() });
+            // الكتابة مباشرة في localStorage (لا نغير الآلية الأصلية)
+            localStorage.setItem(key, value);
+        }
+
+        // 3. استخدام الدوال المحسنة بدلاً من localStorage مباشرة
+        // ملاحظة: هذا آمن لأن localStorage لا يزال يعمل بشكل طبيعي
+
+        // مثال للاستخدام الآمن:
+        const users = JSON.parse(fastRead('users') || '[]');
+        fastWrite('users', JSON.stringify(users));
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 40px;
+            color: #CCCCCC;
+        }
+
+        .add-btn {
+            background-color: #00AA00;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            transition: transform 0.2s;
+            margin-bottom: 30px;
+            display: inline-block;
+        }
+
+        .add-btn:hover {
+            transform: scale(1.02);
+            background-color: #00cc00;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #0a0a0a;
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #FFD700;
+        }
+
+        .modal-header h2 {
+            color: #FFD700;
+            font-size: 1.5rem;
+        }
+
+        .close-modal {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #FFD700;
+            transition: 0.2s;
+        }
+
+        .close-modal:hover {
+            transform: scale(1.1);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .input-group input,
+        .input-group textarea,
+        .input-group select {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+            min-height: 150px;
+        }
+
+        .input-group input:focus,
+        .input-group textarea:focus,
+        .input-group select:focus {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        /* تنسيق حقل الوقت */
+        .time-group {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .time-field {
+            flex: 1;
+            text-align: center;
+        }
+
+        .time-field label {
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .time-field input {
+            text-align: center;
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+
+        .time-separator {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .ampm-select {
+            flex: 0.5;
+        }
+
+        .ampm-select select {
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .datetime-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .datetime-row .input-group {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .file-input {
+            padding: 8px !important;
+            background-color: #1a1a1a;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 10px;
+            border: 1px solid #FFD700;
+        }
+
+        .image-error {
+            color: #ff4444;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .size-note {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .time-note {
+            font-size: 0.7rem;
+            color: #FFA500;
+            margin-top: 5px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            background-color: #FFD700;
+            color: #000000;
+            border: none;
+            padding: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+
+        .submit-btn:hover {
+            transform: scale(1.02);
+        }
+
+        .championships-table {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color: #1a1a1a;
+            color: #FFD700;
+            font-weight: bold;
+        }
+
+        tr:hover {
+            background-color: #1a1a1a;
+        }
+
+        .delete-btn {
+            background-color: #AA0000;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.2s;
+            margin: 0 3px;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .edit-btn {
+            background-color: #0088ff;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.2s;
+            margin: 0 3px;
+        }
+
+        .edit-btn:hover {
+            background-color: #00aaff;
+        }
+
+        .champ-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #CCCCCC;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .subtitle {
+            color: #555;
+        }
+
+        body.light-mode .back-link a {
+            color: #000000;
+        }
+
+        body.light-mode .modal-content {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .modal-header {
+            border-bottom-color: #000000;
+        }
+
+        body.light-mode .modal-header h2 {
+            color: #000000;
+        }
+
+        body.light-mode .close-modal {
+            color: #000000;
+        }
+
+        body.light-mode .input-group label {
+            color: #000000;
+        }
+
+        body.light-mode .input-group input,
+        body.light-mode .input-group textarea,
+        body.light-mode .input-group select {
+            background-color: #f0f0f0;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        body.light-mode .championships-table {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode th {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        body.light-mode td {
+            border-bottom-color: #ddd;
+        }
+
+        body.light-mode tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        body.light-mode .no-data {
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="dashboard.html"></a>
+        </div>
+
+        <h1>🏆 إدارة البطولات</h1>
+        <div class="subtitle">إضافة وحذف وتعديل البطولات (تظهر تلقائياً للمستخدمين)</div>
+
+        <div style="text-align: center;">
+            <button class="add-btn" id="addBtn">+ إضافة بطولة جديدة</button>
+        </div>
+
+        <div id="championshipsContainer">
+            <!-- جدول البطولات سيظهر هنا -->
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل بطولة -->
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitleForm">➕ إضافة بطولة جديدة</h2>
+                <span class="close-modal" id="closeModal">&times;</span>
+            </div>
+            <form id="addChampionshipForm">
+                <div class="input-group">
+                    <label>🏷️ اسم البطولة</label>
+                    <input type="text" id="champName" placeholder="مثال: بطولة الأساطير" required>
+                </div>
+                <div class="input-group">
+                    <label>🎮 نوع اللعبة</label>
+                    <select id="champGame" required>
+                        <option value="">-- اختر نوع اللعبة --</option>
+                        <option value="pubg">ببجي (PUBG)</option>
+                        <option value="freefire">فري فاير (Free Fire)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>📅 تاريخ بداية البطولة</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <div class="input-group">
+                    <label>⏰ وقت بداية البطولة</label>
+                    <div class="time-group">
+                        <div class="time-field">
+                            <label>الساعة</label>
+                            <input type="number" id="hour" min="1" max="12" placeholder="01" value="08" required>
+                        </div>
+                        <div class="time-separator">:</div>
+                        <div class="time-field">
+                            <label>الدقيقة</label>
+                            <input type="number" id="minute" min="0" max="59" placeholder="00" value="00" required>
+                        </div>
+                        <div class="time-field ampm-select">
+                            <label>صباحاً / مساءً</label>
+                            <select id="ampm" required>
+                                <option value="AM">صباحاً (AM)</option>
+                                <option value="PM">مساءً (PM)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="time-note">⏰ الوقت بتوقيت بغداد (العراق)</div>
+                </div>
+                <div class="input-group">
+                    <label>📝 وصف البطولة (يصل إلى 1000 كلمة)</label>
+                    <textarea id="champDesc" placeholder="أدخل وصفاً مفصلاً للبطولة..." maxlength="6000"></textarea>
+                </div>
+                <div class="input-group">
+                    <label>💰 سعر البطولة (بالدولار USD)</label>
+                    <input type="number" id="champPrice" placeholder="مثال: 10" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label>👥 الحد الأقصى لعدد اللاعبين</label>
+                    <input type="number" id="maxPlayers" min="1" max="1000" placeholder="مثال: 100" required>
+                    <div class="size-note">⚠️ عند اكتمال العدد، لن يتمكن المزيد من اللاعبين من التسجيل</div>
+                </div>
+                <div class="input-group">
+                    <label>👥 نوع فريق البطولة</label>
+                    <select id="champType" required>
+                        <option value="">-- اختر نوع الفريق --</option>
+                        <option value="solo">فردي (Solo)</option>
+                        <option value="duo">ثنائي (Duo)</option>
+                        <option value="squad">فريق (Squad)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>🖼️ صورة البطولة (اختياري - يفضل 1280×720)</label>
+                    <input type="file" id="champImageFile" accept="image/*" class="file-input">
+                    <div class="size-note">⚠️ يفضل استخدام صور بقياس 1280×720 بكسل</div>
+                    <div class="image-preview" id="imagePreview"></div>
+                    <div class="image-error" id="imageError">❌ الأبعاد غير صحيحة: يجب أن تكون 1280×720 بكسل</div>
+                </div>
+                <button type="submit" class="submit-btn">✅ حفظ البطولة</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const addBtn = document.getElementById('addBtn');
+        const addModal = document.getElementById('addModal');
+        const closeModal = document.getElementById('closeModal');
+        const addForm = document.getElementById('addChampionshipForm');
+        const championshipsContainer = document.getElementById('championshipsContainer');
+        const champImageFile = document.getElementById('champImageFile');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageError = document.getElementById('imageError');
+        const modalTitleForm = document.getElementById('modalTitleForm');
+
+        const champGame = document.getElementById('champGame');
+        const hourInput = document.getElementById('hour');
+        const minuteInput = document.getElementById('minute');
+        const ampmSelect = document.getElementById('ampm');
+
+        // تنسيق الساعة لرقمين
+        function formatHour(hour) {
+            let h = parseInt(hour);
+            if (isNaN(h)) h = 1;
+            if (h < 1) h = 1;
+            if (h > 12) h = 12;
+            return h.toString().padStart(2, '0');
+        }
+
+        // تنسيق الدقيقة لرقمين
+        function formatMinute(minute) {
+            let m = parseInt(minute);
+            if (isNaN(m)) m = 0;
+            if (m < 0) m = 0;
+            if (m > 59) m = 59;
+            return m.toString().padStart(2, '0');
+        }
+
+        hourInput.addEventListener('input', function () {
+            this.value = formatHour(this.value);
+        });
+
+        minuteInput.addEventListener('input', function () {
+            this.value = formatMinute(this.value);
+        });
+
+        function convertTo24Hour(hour, minute, ampm) {
+            let h = parseInt(hour);
+            if (ampm === 'PM' && h !== 12) {
+                h += 12;
+            } else if (ampm === 'AM' && h === 12) {
+                h = 0;
+            }
+            return `${h.toString().padStart(2, '0')}:${minute}`;
+        }
+
+        let selectedImageData = null;
+        let editingId = null;
+
+        function getCurrentPlayersCount(championshipId) {
+            let count = 0;
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('joined_')) {
+                    let joined = JSON.parse(localStorage.getItem(key));
+                    if (joined.includes(championshipId)) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        function convertFileToBase64(file, callback) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                callback(e.target.result);
+            };
+            reader.onerror = function () {
+                callback(null);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function checkImageDimensions(file, callback) {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            img.onload = function () {
+                const width = this.width;
+                const height = this.height;
+                URL.revokeObjectURL(url);
+                if (width === 1280 && height === 720) {
+                    callback(true, width, height);
+                } else {
+                    callback(false, width, height);
+                }
+            };
+            img.onerror = function () {
+                URL.revokeObjectURL(url);
+                callback(false, null, null, true);
+            };
+            img.src = url;
+        }
+
+        champImageFile.addEventListener('change', function () {
+            const file = this.files[0];
+            if (file) {
+                imageError.style.display = 'none';
+                checkImageDimensions(file, (isValid, width, height, isError) => {
+                    if (isError) {
+                        imagePreview.innerHTML = `<div style="color: #ff4444; padding: 10px;">❌ لا يمكن تحميل الصورة</div>`;
+                        imageError.style.display = 'block';
+                        selectedImageData = null;
+                    } else if (isValid) {
+                        convertFileToBase64(file, function (base64) {
+                            if (base64) {
+                                imagePreview.innerHTML = `<img src="${base64}" alt="معاينة الصورة">`;
+                                selectedImageData = base64;
+                            }
+                        });
+                    } else {
+                        imagePreview.innerHTML = `<div style="color: #ff4444; padding: 10px;">⚠️ الأبعاد الحالية: ${width}×${height}<br>يجب أن تكون 1280×720</div>`;
+                        imageError.style.display = 'block';
+                        selectedImageData = null;
+                    }
+                });
+            } else {
+                imagePreview.innerHTML = '';
+                selectedImageData = null;
+            }
+        });
+
+        function loadChampionships() {
+            let championships = localStorage.getItem('adminChampionships');
+            championships = championships ? JSON.parse(championships) : [];
+
+            if (championships.length === 0) {
+                championshipsContainer.innerHTML = '<div class="no-data">📭 لا توجد بطولات حالياً، أضف بطولة جديدة</div>';
+                return;
+            }
+
+            let html = `
+                <div class="championships-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الصورة</th>
+                                <th>اسم البطولة</th>
+                                <th>اللعبة</th>
+                                <th>تاريخ البدء</th>
+                                <th>السعر</th>
+                                <th>الحد الأقصى</th>
+                                <th>المسجلون</th>
+                                <th>نوع الفريق</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            championships.forEach((champ, index) => {
+                const gameText = champ.game === 'pubg' ? 'ببجي' : 'فري فاير';
+                const currentPlayers = getCurrentPlayersCount(champ.id);
+                const maxPlayers = champ.maxPlayers || 100;
+                const imageHtml = champ.imageData ? `<img src="${champ.imageData}" class="champ-image" onerror="this.style.display='none'">` : '—';
+                const startDateTime = champ.startDate ? `${champ.startDate} ${champ.startTime || ''}` : 'غير محدد';
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${imageHtml}</td>
+                        <td>${champ.name}</td>
+                        <td>${gameText}</td>
+                        <td>${startDateTime}</td>
+                        <td>$${champ.price}</td>
+                        <td>${maxPlayers}</td>
+                        <td style="color: ${currentPlayers >= maxPlayers ? '#ff4444' : '#00AA00'}">${currentPlayers} / ${maxPlayers}</td>
+                        <td>${champ.type === 'solo' ? 'فردي' : (champ.type === 'duo' ? 'ثنائي' : 'فريق')}</td>
+                        <td>
+                            <button class="edit-btn" onclick="editChampionship(${champ.id})">✏️ تعديل</button>
+                            <button class="delete-btn" onclick="deleteChampionship(${champ.id})">🗑️ حذف</button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            championshipsContainer.innerHTML = html;
+        }
+
+        function editChampionship(id) {
+            let championships = JSON.parse(localStorage.getItem('adminChampionships') || '[]');
+            const championship = championships.find(c => c.id === id);
+            if (!championship) return;
+
+            editingId = id;
+            modalTitleForm.innerText = '✏️ تعديل البطولة';
+
+            document.getElementById('champName').value = championship.name;
+            document.getElementById('champGame').value = championship.game;
+            document.getElementById('champDesc').value = championship.description;
+            document.getElementById('champPrice').value = championship.price;
+            document.getElementById('maxPlayers').value = championship.maxPlayers || 100;
+            document.getElementById('champType').value = championship.type;
+
+            if (championship.startDate) {
+                document.getElementById('startDate').value = championship.startDate;
+            }
+            if (championship.startHour) {
+                document.getElementById('hour').value = championship.startHour;
+                document.getElementById('minute').value = championship.startMinute;
+                document.getElementById('ampm').value = championship.ampm;
+            }
+
+            if (championship.imageData) {
+                selectedImageData = championship.imageData;
+                imagePreview.innerHTML = `<img src="${championship.imageData}" alt="معاينة الصورة">`;
+            }
+
+            addModal.style.display = 'flex';
+        }
+
+        function deleteChampionship(id) {
+            if (!confirm('⚠️ هل أنت متأكد من حذف هذه البطولة؟')) return;
+            let championships = JSON.parse(localStorage.getItem('adminChampionships') || '[]');
+            championships = championships.filter(c => c.id !== id);
+            localStorage.setItem('adminChampionships', JSON.stringify(championships));
+            localStorage.removeItem(`chat_${id}`);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key && key.startsWith('joined_')) {
+                    let joined = JSON.parse(localStorage.getItem(key));
+                    if (joined.includes(id)) {
+                        localStorage.setItem(key, JSON.stringify(joined.filter(cid => cid !== id)));
+                    }
+                }
+            }
+            loadChampionships();
+            alert('✅ تم حذف البطولة بنجاح');
+        }
+
+        addBtn.onclick = () => {
+            editingId = null;
+            modalTitleForm.innerText = '➕ إضافة بطولة جديدة';
+            addForm.reset();
+            imagePreview.innerHTML = '';
+            selectedImageData = null;
+            document.getElementById('hour').value = '08';
+            document.getElementById('minute').value = '00';
+            document.getElementById('ampm').value = 'AM';
+            addModal.style.display = 'flex';
+        };
+
+        closeModal.onclick = () => {
+            addModal.style.display = 'none';
+            addForm.reset();
+            imagePreview.innerHTML = '';
+            selectedImageData = null;
+            editingId = null;
+        };
+
+        window.onclick = (e) => { if (e.target === addModal) closeModal.onclick(); };
+
+        addForm.onsubmit = (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('champName').value.trim();
+            const game = document.getElementById('champGame').value;
+            const startDate = document.getElementById('startDate').value;
+            const hour = document.getElementById('hour').value;
+            const minute = document.getElementById('minute').value;
+            const ampm = document.getElementById('ampm').value;
+            const description = document.getElementById('champDesc').value.trim();
+            const price = parseFloat(document.getElementById('champPrice').value);
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+            const type = document.getElementById('champType').value;
+
+            if (!game) {
+                alert('الرجاء اختيار نوع اللعبة');
+                return;
+            }
+
+            if (!startDate) {
+                alert('الرجاء إدخال تاريخ بداية البطولة');
+                return;
+            }
+
+            if (!name || !description || isNaN(price) || !maxPlayers || !type) {
+                alert('الرجاء ملء جميع الحقول المطلوبة');
+                return;
+            }
+
+            // تنسيق الوقت
+            const formattedHour = formatHour(hour);
+            const formattedMinute = formatMinute(minute);
+            const time24 = convertTo24Hour(formattedHour, formattedMinute, ampm);
+
+            let championships = JSON.parse(localStorage.getItem('adminChampionships') || '[]');
+            const championshipData = {
+                id: editingId || Date.now(),
+                name: name,
+                game: game,
+                startDate: startDate,
+                startHour: formattedHour,
+                startMinute: formattedMinute,
+                ampm: ampm,
+                startTime: `${formattedHour}:${formattedMinute} ${ampm}`,
+                startDateTime: `${startDate}T${time24}`,
+                description: description,
+                price: price,
+                maxPlayers: maxPlayers,
+                type: type,
+                imageData: selectedImageData || null,
+                date: new Date().toLocaleString('ar-EG'),
+                timestamp: Date.now()
+            };
+
+            if (editingId) {
+                const index = championships.findIndex(c => c.id === editingId);
+                if (index !== -1) championships[index] = championshipData;
+                alert('✅ تم تعديل البطولة بنجاح');
+            } else {
+                championships.push(championshipData);
+                alert('✅ تم إضافة البطولة بنجاح');
+            }
+
+            localStorage.setItem('adminChampionships', JSON.stringify(championships));
+            closeModal.onclick();
+            loadChampionships();
+        };
+
+        function loadTheme() {
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+        }
+
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') document.body.classList.add('light-mode');
+                else document.body.classList.remove('light-mode');
+            }
+        });
+
+        loadTheme();
+        loadChampionships();
+    </script>
+</body>
+
+</html>

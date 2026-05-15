@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - إدارة مشاكل المستخدمين</title>
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            color: #888;
+        }
+
+        /* تخطيط العمودين */
+        .admin-layout {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* قائمة المستخدمين */
+        .users-list {
+            flex: 1;
+            min-width: 280px;
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .users-header {
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #FFD700;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .users-container {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            position: relative;
+        }
+
+        .user-item:hover {
+            background-color: #1a1a1a;
+        }
+
+        .user-item.active {
+            background-color: #1a1a1a;
+            border-right: 3px solid #FFD700;
+        }
+
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .user-last-msg {
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        /* دائرة الإشعارات */
+        .notification-badge {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            background-color: #ff0000;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 50%;
+            padding: 0 5px;
+        }
+
+        /* منطقة المحادثة */
+        .chat-area {
+            flex: 2;
+            min-width: 400px;
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 550px;
+        }
+
+        .chat-header {
+            padding: 15px;
+            background-color: #1a1a1a;
+            border-bottom: 1px solid #FFD700;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            background-color: #1a1a1a;
+            color: #FFD700;
+        }
+
+        .message.sent .message-bubble {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .message-info {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+            margin-right: 10px;
+            margin-left: 10px;
+        }
+
+        .chat-input-area {
+            display: flex;
+            padding: 15px;
+            border-top: 1px solid #FFD700;
+            gap: 10px;
+            background-color: #0a0a0a;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .send-btn {
+            background-color: #FFD700;
+            color: #000000;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+        }
+
+        .empty-chat {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        .no-user-selected {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #888;
+            text-align: center;
+            padding: 40px;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .back-link a {
+            color: #000000;
+        }
+
+        body.light-mode .users-list {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .users-header {
+            background-color: #e0e0e0;
+            border-bottom-color: #000000;
+        }
+
+        body.light-mode .user-item {
+            border-bottom-color: #ddd;
+        }
+
+        body.light-mode .user-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        body.light-mode .user-item.active {
+            background-color: #f0f0f0;
+        }
+
+        body.light-mode .chat-area {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .chat-header {
+            background-color: #e0e0e0;
+            border-bottom-color: #000000;
+        }
+
+        body.light-mode .message-bubble {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        body.light-mode .message.sent .message-bubble {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        body.light-mode .chat-input {
+            background-color: #f0f0f0;
+            border-color: #000000;
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link">
+            <a href="dashboard.html">← العودة إلى لوحة التحكم</a>
+        </div>
+
+        <h1>👑 إدارة مشاكل المستخدمين</h1>
+        <div class="subtitle">عرض والرد على رسائل المستخدمين</div>
+
+        <div class="admin-layout">
+            <!-- قائمة المستخدمين -->
+            <div class="users-list">
+                <div class="users-header">📋 قائمة المراسلين</div>
+                <div class="users-container" id="usersContainer">
+                    <div class="empty-chat">جاري التحميل...</div>
+                </div>
+            </div>
+
+            <!-- منطقة المحادثة -->
+            <div class="chat-area">
+                <div class="chat-header" id="chatHeader">اختر مستخدم لعرض المحادثة</div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="no-user-selected">👈 اختر مستخدم من القائمة لعرض المحادثة</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" class="chat-input" id="messageInput" placeholder="اكتب ردك هنا..." disabled>
+                    <button class="send-btn" id="sendBtn" disabled>إرسال</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allUsers = [];
+        let unreadCounts = {};
+        let chatInterval = null;
+
+        function getAdminName() {
+            return '👑 الإدمن';
+        }
+
+        function loadAllUsers() {
+            const users = new Set();
+
+            // البحث عن جميع جلسات الدعم
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key === 'supportChat') {
+                    const messages = JSON.parse(localStorage.getItem(key) || '[]');
+                    messages.forEach(msg => {
+                        if (msg.username !== getAdminName()) {
+                            users.add(msg.username);
+                        }
+                    });
+                }
+            }
+
+            allUsers = Array.from(users);
+            updateUsersList();
+        }
+
+        function getUnreadCount(username) {
+            const key = `supportChat_${username}_read`;
+            const lastRead = localStorage.getItem(key);
+            const messages = JSON.parse(localStorage.getItem('supportChat') || '[]');
+            const userMessages = messages.filter(msg => msg.username === username);
+
+            if (!lastRead) {
+                return userMessages.length;
+            }
+
+            const lastReadTime = parseInt(lastRead);
+            const unread = userMessages.filter(msg => msg.timestamp > lastReadTime).length;
+            return unread;
+        }
+
+        function markAsRead(username) {
+            localStorage.setItem(`supportChat_${username}_read`, Date.now().toString());
+            updateUsersList();
+            if (currentUser === username) {
+                loadChatMessages();
+            }
+        }
+
+        function updateUsersList() {
+            const container = document.getElementById('usersContainer');
+
+            if (allUsers.length === 0) {
+                container.innerHTML = '<div class="empty-chat">📭 لا توجد رسائل بعد</div>';
+                return;
+            }
+
+            let html = '';
+            for (let user of allUsers) {
+                const unread = getUnreadCount(user);
+                const isActive = (currentUser === user);
+
+                // الحصول على آخر رسالة من هذا المستخدم
+                const messages = JSON.parse(localStorage.getItem('supportChat') || '[]');
+                const userMessages = messages.filter(msg => msg.username === user);
+                const lastMsg = userMessages.length > 0 ? userMessages[userMessages.length - 1].text.substring(0, 30) : 'لا توجد رسائل';
+
+                html += `
+                    <div class="user-item ${isActive ? 'active' : ''}" data-username="${user}">
+                        <div class="user-info">
+                            <div class="user-name">👤 ${escapeHtml(user)}</div>
+                            <div class="user-last-msg">${escapeHtml(lastMsg)}${lastMsg.length >= 30 ? '...' : ''}</div>
+                        </div>
+                        ${unread > 0 ? `<div class="notification-badge">${unread > 99 ? '99+' : unread}</div>` : ''}
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const username = item.getAttribute('data-username');
+                    currentUser = username;
+                    markAsRead(username);
+
+                    // تحديث الـ UI
+                    document.querySelectorAll('.user-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    document.getElementById('chatHeader').innerHTML = `💬 المحادثة مع ${escapeHtml(username)}`;
+
+                    // تمكين حقل الإدخال
+                    document.getElementById('messageInput').disabled = false;
+                    document.getElementById('sendBtn').disabled = false;
+
+                    loadChatMessages();
+                });
+            });
+        }
+
+        function loadChatMessages() {
+            if (!currentUser) return;
+
+            const messages = JSON.parse(localStorage.getItem('supportChat') || '[]');
+            const userMessages = messages.filter(msg => msg.username === currentUser || msg.username === getAdminName());
+            const chatDiv = document.getElementById('chatMessages');
+
+            if (userMessages.length === 0) {
+                chatDiv.innerHTML = '<div class="empty-chat">💬 لا توجد رسائل بعد</div>';
+                return;
+            }
+
+            chatDiv.innerHTML = '';
+            userMessages.forEach(msg => {
+                const isSent = msg.username === getAdminName();
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+                messageDiv.innerHTML = `
+                    <div class="message-bubble">${escapeHtml(msg.text)}</div>
+                    <div class="message-info">${escapeHtml(msg.username)} • ${msg.time}</div>
+                `;
+                chatDiv.appendChild(messageDiv);
+            });
+            chatDiv.scrollTop = chatDiv.scrollHeight;
+        }
+
+        function sendMessage() {
+            if (!currentUser) {
+                alert('الرجاء اختيار مستخدم أولاً');
+                return;
+            }
+
+            const input = document.getElementById('messageInput');
+            const text = input.value.trim();
+            if (text === '') return;
+
+            let messages = localStorage.getItem('supportChat');
+            if (messages) {
+                messages = JSON.parse(messages);
+            } else {
+                messages = [];
+            }
+
+            messages.push({
+                username: getAdminName(),
+                text: text,
+                time: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+                timestamp: Date.now()
+            });
+
+            localStorage.setItem('supportChat', JSON.stringify(messages));
+            input.value = '';
+            loadChatMessages();
+            updateUsersList();
+        }
+
+        function startChatListener() {
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(() => {
+                if (currentUser) {
+                    loadChatMessages();
+                }
+                loadAllUsers();
+            }, 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        document.getElementById('sendBtn').addEventListener('click', sendMessage);
+        document.getElementById('messageInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        startChatListener();
+        loadAllUsers();
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') {
+                    document.body.classList.add('light-mode');
+                } else {
+                    document.body.classList.remove('light-mode');
+                }
+            }
+            if (e.key === 'supportChat') {
+                loadAllUsers();
+                if (currentUser) loadChatMessages();
+            }
+        });
+
+        loadTheme();
+    </script>
+</body>
+
+</html>

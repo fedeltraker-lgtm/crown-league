@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - دخول</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* خلفية شفافة */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('panner.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.05;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .container {
+            text-align: center;
+            padding: 20px;
+            max-width: 500px;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+        }
+
+        .logo h1 {
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .login-form {
+            background-color: #0a0a0a;
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid #FFD700;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+            text-align: right;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #FFD700;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            color: #FFFFFF;
+            font-size: 1rem;
+            font-family: Arial, sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #FFD700;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #FFD700;
+            color: #000000;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-submit:hover {
+            transform: scale(1.02);
+        }
+
+        .signup-link {
+            margin-top: 20px;
+            color: #CCCCCC;
+        }
+
+        .signup-link a {
+            color: #FFD700;
+            text-decoration: none;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        /* رسائل من الموقع */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            padding: 15px 25px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1100;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.success {
+            border-color: #00AA00;
+            background-color: #0a2a0a;
+        }
+
+        .toast.success .toast-icon {
+            color: #00AA00;
+        }
+
+        .toast.error {
+            border-color: #AA0000;
+            background-color: #2a0a0a;
+        }
+
+        .toast.error .toast-icon {
+            color: #AA0000;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-message {
+            color: #FFFFFF;
+            font-size: 0.95rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode .logo h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .login-form {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .input-group label {
+            color: #000000;
+        }
+
+        body.light-mode .input-group input {
+            background-color: #f0f0f0;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        body.light-mode .signup-link {
+            color: #555;
+        }
+
+        body.light-mode .toast.success {
+            background-color: #d4edda;
+            border-color: #28a745;
+        }
+
+        body.light-mode .toast.success .toast-message {
+            color: #155724;
+        }
+
+        body.light-mode .toast.error {
+            background-color: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        body.light-mode .toast.error .toast-message {
+            color: #721c24;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>CROWN LEAGUE</h1>
+        </div>
+
+        <div class="login-form">
+            <h2 style="margin-bottom: 25px;">تسجيل الدخول</h2>
+            <form id="loginForm">
+                <div class="input-group">
+                    <label>اسم المستخدم</label>
+                    <input type="text" id="username" placeholder="أدخل اسم المستخدم" required>
+                </div>
+                <div class="input-group">
+                    <label>كلمة السر</label>
+                    <input type="password" id="password" placeholder="أدخل كلمة السر" required>
+                </div>
+                <button type="submit" class="btn-submit">دخول</button>
+            </form>
+            <div class="signup-link">
+                ليس لديك حساب؟ <a href="signup.html">إنشاء حساب جديد</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسائل من الموقع -->
+    <div id="successToast" class="toast success">
+        <span class="toast-icon">✅</span>
+        <span class="toast-message" id="successMessage"></span>
+    </div>
+    <div id="errorToast" class="toast error">
+        <span class="toast-icon">❌</span>
+        <span class="toast-message" id="errorMessage"></span>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const successToast = document.getElementById('successToast');
+        const errorToast = document.getElementById('errorToast');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        function showToast(type, message) {
+            if (type === 'success') {
+                successMessage.innerText = message;
+                successToast.style.display = 'flex';
+                successToast.style.animation = 'slideIn 0.3s ease';
+                setTimeout(() => {
+                    successToast.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        successToast.style.display = 'none';
+                        successToast.style.animation = '';
+                    }, 300);
+                }, 3000);
+            } else {
+                errorMessage.innerText = message;
+                errorToast.style.display = 'flex';
+                errorToast.style.animation = 'slideIn 0.3s ease';
+                setTimeout(() => {
+                    errorToast.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        errorToast.style.display = 'none';
+                        errorToast.style.animation = '';
+                    }, 300);
+                }, 3000);
+            }
+        }
+
+        loginForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (username === '' || password === '') {
+                showToast('error', 'الرجاء ملء جميع الحقول');
+                return;
+            }
+
+            const users = localStorage.getItem('users');
+
+            if (!users) {
+                showToast('error', 'لا يوجد حساب بهذا الاسم');
+                return;
+            }
+
+            const allUsers = JSON.parse(users);
+            const user = allUsers.find(u => u.username === username && u.password === password);
+
+            if (user) {
+                localStorage.setItem('currentUser', JSON.stringify({ username: user.username, email: user.email }));
+                showToast('success', `مرحباً ${user.username}... جاري التوجيه`);
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } else {
+                showToast('error', 'اسم المستخدم أو كلمة السر غير صحيحة');
+            }
+        });
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+            }
+        }
+
+        window.addEventListener('storage', function (e) {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') {
+                    document.body.classList.add('light-mode');
+                } else {
+                    document.body.classList.remove('light-mode');
+                }
+            }
+        });
+
+        loadTheme();
+    </script>
+</body>
+
+</html>

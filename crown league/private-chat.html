@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - رسائل البطولات</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .back-link {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .back-link a {
+            color: #FFD700;
+            text-decoration: none;
+            font-size: 1rem;
+        }
+
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            color: #888;
+        }
+
+        .championships-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .championship-item {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .championship-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .championship-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+        }
+
+        .championship-name {
+            color: #FFD700;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .championship-details {
+            color: #888;
+            font-size: 0.8rem;
+            margin-top: 5px;
+        }
+
+        .enter-btn {
+            background-color: #00AA00;
+            color: white;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .enter-btn:hover {
+            background-color: #00cc00;
+        }
+
+        .chat-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-modal-content {
+            background-color: #0a0a0a;
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 900px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #FFD700;
+        }
+
+        .chat-modal-header h2 {
+            color: #FFD700;
+            font-size: 1.3rem;
+        }
+
+        .close-chat {
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #FFD700;
+        }
+
+        .chat-messages-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 15px;
+            border-radius: 15px;
+            background-color: #1a1a1a;
+            color: #FFD700;
+        }
+
+        .message.sent .message-bubble {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .message-info {
+            font-size: 0.7rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .readonly-notice {
+            text-align: center;
+            padding: 12px;
+            background-color: #1a1a1a;
+            border-top: 1px solid #FFD700;
+            color: #FFA500;
+            font-size: 0.8rem;
+        }
+
+        .no-championships {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .no-championships .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .back-link a {
+            color: #000000;
+        }
+
+        body.light-mode .championship-item {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .championship-name {
+            color: #000000;
+        }
+
+        body.light-mode .chat-modal-content {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .chat-modal-header {
+            border-bottom-color: #000000;
+        }
+
+        body.light-mode .close-chat {
+            color: #000000;
+        }
+
+        body.light-mode .message-bubble {
+            background-color: #e0e0e0;
+            color: #000000;
+        }
+
+        body.light-mode .message.sent .message-bubble {
+            background-color: #000000;
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="back-link"><a href="dashboard.html">← العودة إلى لوحة التحكم</a></div>
+        <h1>🔔 رسائل البطولات</h1>
+        <div class="subtitle">الرسائل الخاصة ببطولاتك (وضع القراءة فقط)</div>
+        <div id="championshipsList" class="championships-list"></div>
+    </div>
+
+    <div class="chat-modal" id="chatModal">
+        <div class="chat-modal-content">
+            <div class="chat-modal-header">
+                <h2 id="chatTitle">رسائل البطولة</h2><span class="close-chat" id="closeChatBtn">&times;</span>
+            </div>
+            <div id="chatMessagesArea" class="chat-messages-area"></div>
+            <div class="readonly-notice">🔒 وضع القراءة فقط - يمكنك مشاهدة رسائل الأدمن فقط</div>
+        </div>
+    </div>
+
+    <script>
+        let currentChampionship = null;
+        let chatInterval = null;
+
+        function getCurrentUser() {
+            const saved = localStorage.getItem('currentUser');
+            return saved ? JSON.parse(saved) : { username: 'زائر' };
+        }
+
+        function getUserJoinedChampionships() {
+            const user = getCurrentUser();
+            const key = `joined_${user.username}`;
+            const joined = localStorage.getItem(key);
+            return joined ? JSON.parse(joined) : [];
+        }
+
+        function loadAllChampionships() {
+            const saved = localStorage.getItem('adminChampionships');
+            return saved ? JSON.parse(saved) : [];
+        }
+
+        function getChampionshipById(id, list) {
+            return list.find(c => c.id === id);
+        }
+
+        function loadChatMessages(championshipId) {
+            const messages = localStorage.getItem(`private_chat_${championshipId}`);
+            return messages ? JSON.parse(messages) : [];
+        }
+
+        function displayChatMessages() {
+            if (!currentChampionship) return;
+            const messages = loadChatMessages(currentChampionship.id);
+            const chatArea = document.getElementById('chatMessagesArea');
+            const user = getCurrentUser();
+            if (!chatArea) return;
+            if (messages.length === 0) {
+                chatArea.innerHTML = '<div style="text-align:center;color:#666;padding:40px;">💬 لا توجد رسائل بعد</div>';
+                return;
+            }
+            chatArea.innerHTML = '';
+            messages.forEach(msg => {
+                const isSent = msg.username === user.username;
+                const div = document.createElement('div');
+                div.className = `message ${isSent ? 'sent' : 'received'}`;
+                div.innerHTML = `<div class="message-bubble">${msg.text}</div><div class="message-info">${msg.username} • ${msg.time}</div>`;
+                chatArea.appendChild(div);
+            });
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function markAsRead(championshipId) {
+            const user = getCurrentUser();
+            localStorage.setItem(`private_chat_read_${user.username}_${championshipId}`, Date.now().toString());
+        }
+
+        function startChatListener() {
+            if (chatInterval) clearInterval(chatInterval);
+            chatInterval = setInterval(() => {
+                if (currentChampionship) {
+                    displayChatMessages();
+                }
+            }, 3000);
+        }
+
+        function stopChatListener() {
+            if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
+        }
+
+        function openChat(championship) {
+            currentChampionship = championship;
+            document.getElementById('chatTitle').innerText = `رسائل ${championship.name} (قراءة فقط)`;
+            displayChatMessages();
+            markAsRead(championship.id);
+            document.getElementById('chatModal').style.display = 'flex';
+            startChatListener();
+        }
+
+        function closeChat() {
+            stopChatListener();
+            document.getElementById('chatModal').style.display = 'none';
+            currentChampionship = null;
+        }
+
+        function displayChampionships() {
+            const container = document.getElementById('championshipsList');
+            const joinedIds = getUserJoinedChampionships();
+            const allChampionships = loadAllChampionships();
+            if (joinedIds.length === 0) {
+                container.innerHTML = `<div class="no-championships"><div class="icon">🏆</div><h3>لم تنضم إلى أي بطولة بعد</h3><p>سجل في البطولات لاستلام الرسائل</p><a href="championship.html" style="color:#FFD700;">← الذهاب إلى البطولات</a></div>`;
+                return;
+            }
+            let html = '';
+            for (let id of joinedIds) {
+                const champ = getChampionshipById(id, allChampionships);
+                if (champ) {
+                    const gameText = champ.game === 'pubg' ? 'ببجي' : 'فري فاير';
+                    html += `<div class="championship-item"><div class="championship-header"><div><div class="championship-name">${champ.name}</div><div class="championship-details">${gameText} | ${champ.type === 'solo' ? 'فردي' : (champ.type === 'duo' ? 'ثنائي' : 'فريق')}</div></div><button class="enter-btn" data-id="${champ.id}">👁️ دخول</button></div></div>`;
+                }
+            }
+            container.innerHTML = html;
+            document.querySelectorAll('.enter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    const champ = getChampionshipById(id, allChampionships);
+                    if (champ) openChat(champ);
+                });
+            });
+        }
+
+        document.getElementById('closeChatBtn').addEventListener('click', closeChat);
+        window.addEventListener('click', (e) => { if (e.target === document.getElementById('chatModal')) closeChat(); });
+
+        function loadTheme() {
+            if (localStorage.getItem('theme') === 'light') document.body.classList.add('light-mode');
+        }
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'theme') {
+                if (e.newValue === 'light') document.body.classList.add('light-mode');
+                else document.body.classList.remove('light-mode');
+            }
+            if (e.key === 'adminChampionships') displayChampionships();
+        });
+        loadTheme();
+        displayChampionships();
+    </script>
+</body>
+
+</html>

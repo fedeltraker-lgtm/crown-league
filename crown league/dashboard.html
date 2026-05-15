@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - لوحة التحكم</title>
+    <link rel="icon" type="image/png" href="logo.png">
+    <script src="check-auth.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('panner.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0.05;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            padding: 15px 25px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            z-index: 1100;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .toast.warning {
+            border-color: #FFA500;
+            background-color: #2a1a0a;
+        }
+
+        .toast.warning .toast-icon {
+            color: #FFA500;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-message {
+            color: #FFFFFF;
+            font-size: 0.95rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+
+            to {
+                opacity: 0;
+            }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        body.main-mode .top-bar {
+            justify-content: space-between;
+        }
+
+        body.main-mode .sidebar-buttons {
+            display: none;
+        }
+
+        body.main-mode .info-cards {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        body.side-mode .info-cards {
+            display: none;
+        }
+
+        body.side-mode .sidebar-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        body.light-mode {
+            background-color: #f5f5f5;
+            color: #000000;
+        }
+
+        body.light-mode .top-bar {
+            background-color: #ffffff;
+            border-bottom-color: #000000;
+        }
+
+        body.light-mode .balance {
+            background-color: #e0e0e0;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        body.light-mode .balance span {
+            color: #000000;
+        }
+
+        body.light-mode .profile-icon {
+            filter: drop-shadow(0 0 5px #000000);
+        }
+
+        body.light-mode .currency-menu {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .currency-menu button {
+            color: #000000;
+        }
+
+        body.light-mode .currency-menu button:hover {
+            background-color: #000000;
+            color: #ffffff;
+        }
+
+        body.light-mode h1 {
+            text-shadow: 0 0 10px #000000, 0 0 20px #000000;
+            color: #000000;
+        }
+
+        body.light-mode .welcome {
+            color: #333333;
+        }
+
+        body.light-mode .btn-deposit {
+            background-color: #00AA00;
+            color: white;
+        }
+
+        body.light-mode .btn-withdraw {
+            background-color: #AA0000;
+            color: white;
+        }
+
+        body.light-mode .side-card {
+            background-color: #ffffff;
+            border-color: #000000;
+            color: #000000;
+        }
+
+        body.light-mode .side-card h3 {
+            color: #000000;
+        }
+
+        body.light-mode .side-card p {
+            color: #555555;
+        }
+
+        body.light-mode .info-card {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .info-card h3 {
+            color: #000000;
+        }
+
+        body.light-mode .info-card p {
+            color: #555555;
+        }
+
+        body.light-mode .games-title {
+            color: #000000;
+        }
+
+        body.light-mode .game-name {
+            color: #333333;
+        }
+
+        body.light-mode .game-item img {
+            border-color: #000000;
+        }
+
+        body.light-mode .info-text {
+            color: #333333;
+        }
+
+        body.light-mode .info-box {
+            background-color: #ffffff;
+            border-color: #000000;
+        }
+
+        body.light-mode .info-box h3 {
+            color: #000000;
+        }
+
+        body.light-mode .info-box p {
+            color: #555555;
+        }
+
+        body.light-mode .prize-box {
+            background-color: #f0f0f0;
+        }
+
+        body.light-mode .prize-list li {
+            color: #555555;
+            border-bottom-color: #ddd;
+        }
+
+        body.light-mode .toast {
+            background-color: #f0f0f0;
+            border-color: #000000;
+        }
+
+        body.light-mode .toast.warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        body.light-mode .toast-message {
+            color: #000000;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background-color: #0a0a0a;
+            border-bottom: 1px solid #FFD700;
+            flex-wrap: wrap;
+            gap: 15px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .balance {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background-color: #111111;
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid #FFD700;
+            transition: all 0.3s ease;
+        }
+
+        .balance span {
+            color: #FFD700;
+            transition: all 0.3s ease;
+        }
+
+        .right-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .sidebar-buttons {
+            display: none;
+            gap: 15px;
+        }
+
+        .side-card {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 12px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 100px;
+            position: relative;
+        }
+
+        .side-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .side-card h3 {
+            color: #FFD700;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .side-card p {
+            color: #CCCCCC;
+            font-size: 0.7rem;
+        }
+
+        .btn-deposit,
+        .btn-withdraw {
+            padding: 8px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-deposit {
+            background-color: #00AA00;
+            color: white;
+        }
+
+        .btn-deposit:hover {
+            transform: scale(1.05);
+            background-color: #00cc00;
+        }
+
+        .btn-withdraw {
+            background-color: #AA0000;
+            color: white;
+        }
+
+        .btn-withdraw:hover {
+            transform: scale(1.05);
+            background-color: #cc0000;
+        }
+
+        .profile-icon {
+            font-size: 2rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            filter: drop-shadow(0 0 5px #FFD700);
+            transition: transform 0.2s;
+        }
+
+        .profile-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .currency-menu {
+            position: absolute;
+            top: 80px;
+            right: 40px;
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            border-radius: 10px;
+            display: none;
+            flex-direction: column;
+            z-index: 100;
+            min-width: 150px;
+        }
+
+        .currency-menu button {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: #FFD700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: 0.2s;
+            border-radius: 8px;
+        }
+
+        .currency-menu button:hover {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: #FFD700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: 0.2s;
+            border-radius: 8px;
+            width: 100%;
+            border-top: 1px solid #333;
+        }
+
+        .logout-btn:hover {
+            background-color: #AA0000;
+            color: #ffffff;
+        }
+
+        .theme-btn {
+            background: none;
+            border: none;
+            padding: 12px 25px;
+            color: #FFD700;
+            font-size: 1rem;
+            cursor: pointer;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            transition: 0.2s;
+            border-radius: 8px;
+            width: 100%;
+        }
+
+        .theme-btn:hover {
+            background-color: #0088ff;
+            color: #ffffff;
+        }
+
+        .container {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+            transition: all 0.3s ease;
+        }
+
+        .welcome {
+            font-size: 1.3rem;
+            color: #CCCCCC;
+            transition: all 0.3s ease;
+            margin-bottom: 40px;
+        }
+
+        .info-cards {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            margin-bottom: 40px;
+        }
+
+        .info-card {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 15px 25px;
+            min-width: 140px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+        }
+
+        .info-card h3 {
+            color: #FFD700;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .info-card p {
+            color: #CCCCCC;
+            font-size: 0.7rem;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            min-width: 20px;
+            height: 20px;
+            background-color: #ff0000;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            z-index: 10;
+        }
+
+        .games-section {
+            margin-top: 0;
+            padding-top: 0;
+        }
+
+        .games-title {
+            font-size: 2rem;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-align: center;
+        }
+
+        .games-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            margin-bottom: 50px;
+        }
+
+        .game-item {
+            text-align: center;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .game-item:hover {
+            transform: translateY(-5px);
+        }
+
+        .game-item img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 2px solid #FFD700;
+            transition: all 0.3s ease;
+        }
+
+        .game-item:hover img {
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .game-name {
+            margin-top: 10px;
+            color: #FFD700;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .info-section {
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: right;
+        }
+
+        .info-text {
+            color: #FFFFFF;
+            line-height: 1.8;
+            font-size: 1rem;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .info-box p {
+            color: #CCCCCC;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .prize-box {
+            background-color: #1a1a1a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .prize-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .prize-list li {
+            color: #CCCCCC;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+
+        .highlight {
+            color: #FFD700;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="main-mode">
+
+    <div class="top-bar">
+        <div class="balance">💰 رصيدك: <span id="balanceAmount">0</span> <span id="currencySymbol">USD</span></div>
+        <div class="right-section">
+            <div class="action-buttons">
+                <a href="select-payment.html" class="btn-deposit">شحن</a>
+                <a href="withdraw.html" class="btn-withdraw">سحب</a>
+            </div>
+            <div class="sidebar-buttons" id="sidebarButtons">
+                <div class="side-card" id="tournamentsSide">
+                    <h3>🏆 البطولات</h3>
+                    <p>استعرض البطولات</p>
+                </div>
+                <div class="side-card" id="messagesSide">
+                    <h3>📨 الرسائل</h3>
+                    <p>راسل الدعم</p><span id="sidebarMessagesBadge" class="notification-badge"
+                        style="display: none;"></span>
+                </div>
+                <div class="side-card" id="privateChatSide">
+                    <h3>🔔 رسائل مهمة</h3>
+                    <p>رسائل البطولات</p><span id="privateChatSideBadge" class="notification-badge"
+                        style="display: none;"></span>
+                </div>
+            </div>
+            <div style="position: relative;">
+                <button class="profile-icon" id="profileBtn">👤</button>
+                <div class="currency-menu" id="currencyMenu">
+                    <button id="usdBtn">USD</button>
+                    <button id="sypBtn">SYP</button>
+                    <button id="themeBtn" class="theme-btn">🎨 تغيير النمط</button>
+                    <button id="logoutBtn" class="logout-btn">🚪 تسجيل خروج</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>CROWN LEAGUE</h1>
+        <div class="welcome" id="welcomeMsg">مرحباً بك في لوحة التحكم</div>
+
+        <div class="info-cards" id="infoCards">
+            <div class="info-card" id="tournamentsCard">
+                <h3>🏆 البطولات</h3>
+                <p>استعرض البطولات المتاحة</p>
+            </div>
+            <div class="info-card" id="messagesCard">
+                <h3>📨 الرسائل</h3>
+                <p>راسل الإدمن والدعم</p><span id="messagesBadge" class="notification-badge"
+                    style="display: none;"></span>
+            </div>
+            <div class="info-card" id="privateChatCard">
+                <h3>🔔 رسائل مهمة</h3>
+                <p>رسائل البطولات الخاصة</p><span id="privateChatBadge" class="notification-badge"
+                    style="display: none;"></span>
+            </div>
+        </div>
+
+        <div class="games-section">
+            <div class="games-title">🏆 أهم الألعاب 🏆</div>
+            <div class="games-container">
+                <div class="game-item"><img src="pubg.png" alt="PUBG"
+                        onerror="this.src='https://via.placeholder.com/150?text=PUBG'">
+                    <div class="game-name">ببجي</div>
+                </div>
+                <div class="game-item"><img src="freefire.png" alt="Free Fire"
+                        onerror="this.src='https://via.placeholder.com/150?text=Free+Fire'">
+                    <div class="game-name">فري فاير</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <div class="info-text">Crown League هو موقع إلكتروني ينظم بطولات تنافسية لألعاب الفيديو ببجي وفري فاير.
+            </div>
+            <div class="info-text">رسوم الاشتراك في أقل البطولات هي <span class="highlight">0.25 دولار أميركي أو 20 ليرة
+                    سورية</span> فقط للشخص الواحد.</div>
+            <div class="info-text">الهدف: إتاحة الفرصة لأي شخص مهما كانت إمكانياته المادية أن يشارك في بطولات حقيقية
+                وينافس على جوائز قيمة.</div>
+            <div class="info-box">
+                <h3>📋 تفاصيل أقل البطولات رسوماً</h3>
+                <p><span class="highlight">رسوم اللاعب الواحد:</span> 0.25 دولار أو 20 ليرة سورية</p>
+                <p><span class="highlight">عدد المشاركين:</span> 100 لاعب</p>
+                <p><span class="highlight">مدة البطولة:</span> من نصف ساعة حتى ساعة كحد أقصى</p>
+                <p><span class="highlight">الألعاب المتاحة:</span> ببجي – فري فاير</p>
+            </div>
+            <div class="info-box">
+                <h3>🎮 نمط اللعب في ببجي</h3>
+                <p>• خريطة أرنغل</p>
+                <p>• نظام فردي (كل لاعب لوحده)</p>
+                <p>• مباراة واحدة تحدد الفائز</p>
+            </div>
+            <div class="info-box">
+                <h3>🎮 نمط اللعب في فري فاير</h3>
+                <p>• خريطة برمودا</p>
+                <p>• نظام فردي (كل لاعب لوحده)</p>
+                <p>• مباراة واحدة تحدد الفائز</p>
+            </div>
+            <div class="info-box">
+                <h3>💰 الجوائز</h3>
+                <div class="prize-box">
+                    <div class="prize-list">
+                        <li><span class="highlight">المركز الأول:</span> 7 دولارات</li>
+                        <li><span class="highlight">المركز الثاني:</span> 2 دولار</li>
+                        <li><span class="highlight">المركز الثالث:</span> 1 دولار</li>
+                    </div>
+                </div>
+            </div>
+            <div class="info-box">
+                <h3>✨ لماذا هذه البطولة مميزة؟</h3>
+                <p>✓ تكلفة منخفضة جداً (ربع دولار فقط أو 20 ليرة)</p>
+                <p>✓ مدة قصيرة لا تتعب اللاعب (نصف ساعة إلى ساعة)</p>
+                <p>✓ جوائز حقيقية لأول ثلاثة مراكز</p>
+                <p>✓ عدد كبير من المشاركين يزيد من التحدي والإثارة</p>
+                <p>✓ فرصة للمنافسة على خرائط أرنغل وبرمودا الأشهر في العالم</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="warningToast" class="toast warning">
+        <span class="toast-icon">⚠️</span>
+        <span class="toast-message" id="warningMessage"></span>
+    </div>
+
+    <script>
+        let currentCurrency = 'USD';
+        const conversionRate = 100;
+        let currentMode = 'main';
+
+        const balanceAmountSpan = document.getElementById('balanceAmount');
+        const currencySymbolSpan = document.getElementById('currencySymbol');
+        const profileBtn = document.getElementById('profileBtn');
+        const currencyMenu = document.getElementById('currencyMenu');
+        const usdBtn = document.getElementById('usdBtn');
+        const sypBtn = document.getElementById('sypBtn');
+        const themeBtn = document.getElementById('themeBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const body = document.body;
+
+        const warningToast = document.getElementById('warningToast');
+        const warningMessage = document.getElementById('warningMessage');
+
+        function showToast(message) {
+            warningMessage.innerText = message;
+            warningToast.style.display = 'flex';
+            warningToast.style.animation = 'slideIn 0.3s ease';
+            setTimeout(() => {
+                warningToast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    warningToast.style.display = 'none';
+                    warningToast.style.animation = '';
+                }, 300);
+            }, 3000);
+        }
+
+        function getCurrentUser() {
+            const savedUser = localStorage.getItem('currentUser');
+            return savedUser ? JSON.parse(savedUser) : { username: 'زائر', email: '' };
+        }
+
+        function getUserBalance() {
+            const user = getCurrentUser();
+            const balance = localStorage.getItem(`balance_${user.username}`);
+            return balance ? parseFloat(balance) : 0;
+        }
+
+        function updateBalanceDisplay() {
+            let balanceUSD = getUserBalance();
+            if (currentCurrency === 'USD') {
+                balanceAmountSpan.innerText = balanceUSD;
+                currencySymbolSpan.innerText = 'USD';
+            } else {
+                balanceAmountSpan.innerText = balanceUSD * conversionRate;
+                currencySymbolSpan.innerText = 'SYP';
+            }
+        }
+
+        // ========== حساب عدد الرسائل غير المقروءة ==========
+        function getUnreadPublicMessages() {
+            const messages = localStorage.getItem('publicChat');
+            if (!messages) return 0;
+            const lastReadKey = `publicChat_read_${getCurrentUser().username}`;
+            const lastRead = localStorage.getItem(lastReadKey);
+            const allMessages = JSON.parse(messages);
+            if (!lastRead) return allMessages.length;
+            const lastReadTime = parseInt(lastRead);
+            return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime).length;
+        }
+
+        function getUnreadSupportMessages() {
+            const messages = localStorage.getItem('supportChat');
+            if (!messages) return 0;
+            const lastReadKey = `supportChat_read_${getCurrentUser().username}`;
+            const lastRead = localStorage.getItem(lastReadKey);
+            const allMessages = JSON.parse(messages);
+            const currentUser = getCurrentUser().username;
+            if (!lastRead) return allMessages.filter(msg => msg.username !== currentUser).length;
+            const lastReadTime = parseInt(lastRead);
+            return allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime && msg.username !== currentUser).length;
+        }
+
+        function getUnreadPrivateMessages() {
+            const user = getCurrentUser();
+            const joinedKey = `joined_${user.username}`;
+            const joined = localStorage.getItem(joinedKey);
+            if (!joined) return 0;
+            const joinedChampionships = JSON.parse(joined);
+            let totalUnread = 0;
+            for (let champId of joinedChampionships) {
+                const chatKey = `private_chat_${champId}`;
+                const messages = localStorage.getItem(chatKey);
+                if (!messages) continue;
+                const lastReadKey = `private_chat_read_${user.username}_${champId}`;
+                const lastRead = localStorage.getItem(lastReadKey);
+                const allMessages = JSON.parse(messages);
+                if (!lastRead) {
+                    totalUnread += allMessages.length;
+                } else {
+                    const lastReadTime = parseInt(lastRead);
+                    totalUnread += allMessages.filter(msg => (msg.timestamp || 0) > lastReadTime).length;
+                }
+            }
+            return totalUnread;
+        }
+
+        function updateMessagesBadge() {
+            const publicUnread = getUnreadPublicMessages();
+            const supportUnread = getUnreadSupportMessages();
+            const totalUnread = publicUnread + supportUnread;
+
+            const badges = document.querySelectorAll('#messagesBadge, #sidebarMessagesBadge');
+            badges.forEach(badge => {
+                if (totalUnread > 0) {
+                    badge.style.display = 'flex';
+                    badge.innerText = totalUnread > 99 ? '99+' : totalUnread;
+                    badge.title = `رسائل جديدة: ${totalUnread} (${supportUnread} من الدعم + ${publicUnread} من العامة)`;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        function updatePrivateChatBadge() {
+            const unread = getUnreadPrivateMessages();
+            const badges = document.querySelectorAll('#privateChatBadge, #privateChatSideBadge');
+            badges.forEach(badge => {
+                if (unread > 0) {
+                    badge.style.display = 'flex';
+                    badge.innerText = unread > 99 ? '99+' : unread;
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        }
+
+        // تحديث كل 5 ثوانٍ
+        setInterval(() => {
+            updateMessagesBadge();
+            updatePrivateChatBadge();
+        }, 5000);
+        updateMessagesBadge();
+        updatePrivateChatBadge();
+
+        function setCurrency(currency) {
+            currentCurrency = currency;
+            updateBalanceDisplay();
+            currencyMenu.style.display = 'none';
+        }
+
+        function toggleMode() {
+            if (currentMode === 'main') {
+                currentMode = 'side';
+                body.classList.remove('main-mode');
+                body.classList.add('side-mode');
+            } else {
+                currentMode = 'main';
+                body.classList.remove('side-mode');
+                body.classList.add('main-mode');
+            }
+            localStorage.setItem('dashboardMode', currentMode);
+        }
+
+        function loadMode() {
+            const savedMode = localStorage.getItem('dashboardMode');
+            if (savedMode === 'side') {
+                currentMode = 'side';
+                body.classList.add('side-mode');
+            } else {
+                currentMode = 'main';
+                body.classList.add('main-mode');
+            }
+        }
+
+        function logout() {
+            showToast('⚠️ هل أنت متأكد من تسجيل الخروج؟');
+            setTimeout(() => {
+                localStorage.removeItem('currentUser');
+                window.location.href = 'start.html';
+            }, 1500);
+        }
+
+        profileBtn.addEventListener('click', function (e) {
+            e.stopPropagation();
+            currencyMenu.style.display = currencyMenu.style.display === 'flex' ? 'none' : 'flex';
+        });
+
+        document.addEventListener('click', () => { currencyMenu.style.display = 'none'; });
+        currencyMenu.addEventListener('click', (e) => e.stopPropagation());
+
+        usdBtn.addEventListener('click', () => setCurrency('USD'));
+        sypBtn.addEventListener('click', () => setCurrency('SYP'));
+        themeBtn.addEventListener('click', () => { toggleMode(); currencyMenu.style.display = 'none'; });
+        logoutBtn.addEventListener('click', () => { logout(); currencyMenu.style.display = 'none'; });
+
+        function setupCardListeners() {
+            const tournamentsCard = document.getElementById('tournamentsCard');
+            const messagesCard = document.getElementById('messagesCard');
+            const privateChatCard = document.getElementById('privateChatCard');
+            const tournamentsSide = document.getElementById('tournamentsSide');
+            const messagesSide = document.getElementById('messagesSide');
+            const privateChatSide = document.getElementById('privateChatSide');
+
+            if (tournamentsCard) tournamentsCard.addEventListener('click', () => window.location.href = 'championship.html');
+            if (messagesCard) messagesCard.addEventListener('click', () => window.location.href = 'message.html');
+            if (privateChatCard) privateChatCard.addEventListener('click', () => window.location.href = 'private-chat.html');
+            if (tournamentsSide) tournamentsSide.addEventListener('click', () => window.location.href = 'championship.html');
+            if (messagesSide) messagesSide.addEventListener('click', () => window.location.href = 'message.html');
+            if (privateChatSide) privateChatSide.addEventListener('click', () => window.location.href = 'private-chat.html');
+        }
+
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            const userData = JSON.parse(savedUser);
+            document.getElementById('welcomeMsg').innerHTML = `مرحباً ${userData.username} 👋<br>أهلاً بك في لوحة التحكم`;
+        }
+
+        loadMode();
+        updateBalanceDisplay();
+        setupCardListeners();
+    </script>
+</body>
+
+</html>

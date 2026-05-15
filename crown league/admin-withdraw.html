@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crown League - لوحة تحكم الإدمن (السحب)</title>
+    <script src="check-auth.js">
+        // ========== تحسين الأداء مع الحفاظ على التوافق ==========
+
+            // 1. تحسين القراءة - إضافة طبقة تخزين مؤقت فقط (لا نستبدل localStorage)
+            const readCache = new Map();
+            const CACHE_TTL = 500; // نصف ثانية
+
+            function fastRead(key) {
+                // محاولة القراءة من الكاش أولاً
+                if (readCache.has(key)) {
+                    const { value, timestamp } = readCache.get(key);
+                    if (Date.now() - timestamp < CACHE_TTL) {
+                        return value;
+                    }
+                }
+
+                // إذا انتهت صلاحية الكاش، نقرأ من localStorage
+                const value = localStorage.getItem(key);
+                readCache.set(key, { value, timestamp: Date.now() });
+                return value;
+            }
+
+            // 2. تحسين الكتابة - الكتابة المباشرة مع تحديث الكاش
+            function fastWrite(key, value) {
+                // تحديث الكاش أولاً
+                readCache.set(key, { value, timestamp: Date.now() });
+                // الكتابة مباشرة في localStorage (لا نغير الآلية الأصلية)
+                localStorage.setItem(key, value);
+            }
+
+            // 3. استخدام الدوال المحسنة بدلاً من localStorage مباشرة
+            // ملاحظة: هذا آمن لأن localStorage لا يزال يعمل بشكل طبيعي
+
+            // مثال للاستخدام الآمن:
+            const users = JSON.parse(fastRead('users') || '[]');
+            fastWrite('users', JSON.stringify(users));
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #000000;
+            color: #FFD700;
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1rem;
+            margin-bottom: 30px;
+            color: #CCCCCC;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .stat-card {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            padding: 20px 40px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #CCCCCC;
+            margin-top: 5px;
+        }
+
+        .buttons-bar {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-start;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .refresh-btn,
+        .clear-btn {
+            padding: 10px 25px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            border: none;
+        }
+
+        .refresh-btn {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .clear-btn {
+            background-color: #AA0000;
+            color: white;
+        }
+
+        .requests-table {
+            background-color: #0a0a0a;
+            border: 1px solid #FFD700;
+            border-radius: 15px;
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #333;
+        }
+
+        th {
+            background-color: #1a1a1a;
+            color: #FFD700;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background-color: #1a1a1a;
+        }
+
+        .status-pending {
+            color: #FFA500;
+            font-weight: bold;
+        }
+
+        .status-approved {
+            color: #00AA00;
+            font-weight: bold;
+        }
+
+        .status-rejected {
+            color: #AA0000;
+            font-weight: bold;
+        }
+
+        .btn-approve {
+            background-color: #00AA00;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .btn-reject {
+            background-color: #AA0000;
+            color: white;
+            border: none;
+            padding: 6px 15px;
+            margin: 0 5px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #CCCCCC;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .page-btn {
+            background-color: #1a1a1a;
+            border: 1px solid #FFD700;
+            color: #FFD700;
+            padding: 8px 14px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        .page-btn.active {
+            background-color: #FFD700;
+            color: #000000;
+        }
+
+        .page-btn:hover {
+            background-color: #FFD700;
+            color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>👑 لوحة تحكم الإدمن - طلبات السحب</h1>
+        <div class="subtitle">إدارة طلبات السحب - تظهر جميع المعلومات المدخلة</div>
+
+        <div class="buttons-bar">
+            <button class="refresh-btn" id="refreshBtn">🔄 تحديث الجدول</button>
+            <button class="clear-btn" id="clearBtn">🗑️ مسح السجل بالكامل</button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="pendingCount">0</div>
+                <div class="stat-label">⏳ قيد الانتظار</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="approvedCount">0</div>
+                <div class="stat-label">✅ تمت الموافقة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="rejectedCount">0</div>
+                <div class="stat-label">❌ مرفوضة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalAmount">0</div>
+                <div class="stat-label">💰 إجمالي السحوبات (USD)</div>
+            </div>
+        </div>
+
+        <div id="requestsTableContainer"></div>
+        <div id="paginationContainer" class="pagination"></div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        const itemsPerPage = 20;
+
+        function loadRequests() {
+            let requests = localStorage.getItem('withdrawRequests');
+
+            if (!requests) {
+                document.getElementById('requestsTableContainer').innerHTML = '<div class="no-data">📭 لا توجد طلبات سحب حتى الآن</div>';
+                document.getElementById('pendingCount').innerText = '0';
+                document.getElementById('approvedCount').innerText = '0';
+                document.getElementById('rejectedCount').innerText = '0';
+                document.getElementById('totalAmount').innerText = '0';
+                document.getElementById('paginationContainer').innerHTML = '';
+                return;
+            }
+
+            let allRequests = JSON.parse(requests);
+
+            const pending = allRequests.filter(r => r.status === 'pending');
+            const approved = allRequests.filter(r => r.status === 'approved');
+            const rejected = allRequests.filter(r => r.status === 'rejected');
+            const totalAmount = approved.reduce((sum, r) => sum + r.amountUSD, 0);
+
+            document.getElementById('pendingCount').innerText = pending.length;
+            document.getElementById('approvedCount').innerText = approved.length;
+            document.getElementById('rejectedCount').innerText = rejected.length;
+            document.getElementById('totalAmount').innerText = totalAmount;
+
+            if (allRequests.length === 0) {
+                document.getElementById('requestsTableContainer').innerHTML = '<div class="no-data">📭 لا توجد طلبات سحب حتى الآن</div>';
+                document.getElementById('paginationContainer').innerHTML = '';
+                return;
+            }
+
+            allRequests.sort((a, b) => b.id - a.id);
+
+            const totalPages = Math.ceil(allRequests.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const requestsToShow = allRequests.slice(startIndex, endIndex);
+
+            let html = `
+                <div class="requests-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>المبلغ (USD)</th>
+                                <th>المبلغ الأصلي</th>
+                                <th>العملة</th>
+                                <th>اسم المستخدم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الاسم الكامل</th>
+                                <th>نوع السحب</th>
+                                <th>رقم المحفظة</th>
+                                <th>التاريخ</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            for (let request of requestsToShow) {
+                let statusText = '';
+                let statusClass = '';
+                if (request.status === 'pending') {
+                    statusText = '⏳ قيد الانتظار';
+                    statusClass = 'status-pending';
+                } else if (request.status === 'approved') {
+                    statusText = '✅ تمت الموافقة';
+                    statusClass = 'status-approved';
+                } else {
+                    statusText = '❌ مرفوض';
+                    statusClass = 'status-rejected';
+                }
+
+                const withdrawTypeName = request.withdrawTypeName || request.withdrawType || 'غير محدد';
+                const walletAddr = request.walletAddress || request.withdrawNumber || 'غير موجود';
+                const originalAmount = request.amountOriginal || request.amountUSD || 0;
+                const originalCurrency = request.originalCurrency || 'USD';
+
+                html += `
+                    <tr data-id="${request.id}">
+                        <td>$${request.amountUSD} USD</td>
+                        <td>${originalAmount}</td>
+                        <td>${originalCurrency}</td>
+                        <td>${request.username}</td>
+                        <td>${request.email}</td>
+                        <td>${request.fullName || 'غير مدخل'}</td>
+                        <td>${withdrawTypeName}</td>
+                        <td>${walletAddr}</td>
+                        <td>${request.date}</td>
+                        <td class="${statusClass}">${statusText}</td>
+                        <td class="actions-cell">
+                `;
+
+                if (request.status === 'pending') {
+                    html += `
+                        <button class="btn-approve" data-id="${request.id}">✅ موافقة</button>
+                        <button class="btn-reject" data-id="${request.id}">❌ رفض</button>
+                    `;
+                } else {
+                    html += `<span style="color:#666;">-</span>`;
+                }
+
+                html += `</td></tr>`;
+            }
+
+            html += `</tbody></table></div>`;
+            document.getElementById('requestsTableContainer').innerHTML = html;
+
+            let paginationHtml = '';
+            let maxButtons = 10;
+            let startPage = Math.max(1, currentPage - Math.floor(maxButtons / 2));
+            let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+            if (endPage - startPage + 1 < maxButtons) {
+                startPage = Math.max(1, endPage - maxButtons + 1);
+            }
+
+            if (startPage > 1) {
+                paginationHtml += `<button class="page-btn" data-page="1">1</button>`;
+                if (startPage > 2) paginationHtml += `<button class="page-btn disabled">...</button>`;
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHtml += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) paginationHtml += `<button class="page-btn disabled">...</button>`;
+                paginationHtml += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+            }
+
+            document.getElementById('paginationContainer').innerHTML = paginationHtml;
+
+            document.querySelectorAll('.btn-approve').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    approveRequest(id);
+                });
+            });
+
+            document.querySelectorAll('.btn-reject').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(btn.getAttribute('data-id'));
+                    rejectRequest(id);
+                });
+            });
+
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                if (!btn.classList.contains('disabled')) {
+                    btn.addEventListener('click', () => {
+                        currentPage = parseInt(btn.getAttribute('data-page'));
+                        loadRequests();
+                    });
+                }
+            });
+        }
+
+        function approveRequest(id) {
+            let requests = JSON.parse(localStorage.getItem('withdrawRequests'));
+            const index = requests.findIndex(r => r.id === id);
+
+            if (index !== -1 && requests[index].status === 'pending') {
+                requests[index].status = 'approved';
+                localStorage.setItem('withdrawRequests', JSON.stringify(requests));
+                alert(`✅ تمت الموافقة على طلب سحب بقيمة ${requests[index].amountUSD} دولار للمستخدم ${requests[index].username}`);
+                loadRequests();
+            }
+        }
+
+        function rejectRequest(id) {
+            let requests = JSON.parse(localStorage.getItem('withdrawRequests'));
+            const index = requests.findIndex(r => r.id === id);
+
+            if (index !== -1 && requests[index].status === 'pending') {
+                requests[index].status = 'rejected';
+                localStorage.setItem('withdrawRequests', JSON.stringify(requests));
+
+                let currentBalance = localStorage.getItem(`balance_${requests[index].username}`);
+                currentBalance = currentBalance ? JSON.parse(currentBalance) : 0;
+                currentBalance += requests[index].amountUSD;
+                localStorage.setItem(`balance_${requests[index].username}`, JSON.stringify(currentBalance));
+
+                alert(`❌ تم رفض طلب السحب. تم إعادة ${requests[index].amountUSD} دولار إلى رصيد ${requests[index].username}`);
+                loadRequests();
+            }
+        }
+
+        function clearAllHistory() {
+            if (confirm('⚠️ هل أنت متأكد من مسح جميع طلبات السحب؟')) {
+                localStorage.removeItem('withdrawRequests');
+                currentPage = 1;
+                loadRequests();
+            }
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', loadRequests);
+        document.getElementById('clearBtn').addEventListener('click', clearAllHistory);
+
+        loadRequests();
+    </script>
+</body>
+
+</html>
